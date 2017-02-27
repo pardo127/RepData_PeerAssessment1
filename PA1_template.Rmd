@@ -1,1 +1,134 @@
+---
+title: "PA1_template"
+author: "José Ramón Pardo Rodríguez"
+date: "22 de febrero de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+What is mean total number of steps taken per day?
+
+For this part of the assignment, you can ignore the missing values in the dataset.
+
+Calculate the total number of steps taken per day.
+
+
+```{r, echo=TRUE}
+setwd("C:/Users/José Ramón Pardo/Desktop/R/Coursera/data")
+datactivity <-read.csv("activity.csv")
+
+```
+
+If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
+
+
+```{r, echo=TRUE}
+SPD <- aggregate(steps ~ date, datactivity, sum, na.rm=TRUE)
+hist(SPD$steps)
+```
+
+Calculate and report the mean and median of the total number of steps taken per day.
+
+
+```{r, echo=TRUE}
+MeanSPD <- mean(SPD$steps)
+MeanSPD
+
+MedianSPD <- median(SPD$steps)
+MedianSPD
+```
+
+What is the average daily activity pattern?
+
+Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
+
+```{r, echo=TRUE}
+SPI<-aggregate(steps~interval, data=datactivity, mean, na.rm=TRUE)
+plot(steps~interval, data=SPI, type="l")
+```
+
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r, echo=TRUE}
+intervalMax <- SPI[which.max(SPI$steps),]$interval
+intervalMax
+```
+
+Imputing missing values.
+
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs.)
+
+```{r, echo=TRUE}
+Missingsvalues <- sum(is.na(datactivity$steps))
+Missingsvalues
+```
+
+Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+```{r, echo=TRUE}
+MeanSPI<-function(interval){
+    SPI[SPI$interval==interval,]$steps
+}
+```
+
+Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r,echo=TRUE}
+datactivityNA<-datactivity
+for(i in 1:nrow(datactivityNA)){
+    if(is.na(datactivityNA[i,]$steps)){
+        datactivityNA[i,]$steps <- MeanSPI(datactivityNA[i,]$interval)
+    }
+}
+```
+
+Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r, echo=TRUE}
+SPDNA <- aggregate(steps ~ date, data=datactivityNA, sum)
+hist(SPDNA$steps)
+```
+
+
+```{r, echo=TRUE}
+MeanSPDNA <- mean(SPDNA$steps)
+MedianSPDNA <- median(SPDNA$steps)
+```
+
+Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{R, echo=TRUE}
+datactivityNA$date <- as.Date(strptime(datactivityNA$date, format="%Y-%m-%d"))
+datactivityNA$day <- weekdays(datactivityNA$date)
+for (i in 1:nrow(datactivityNA)) {
+    if (datactivityNA[i,]$day %in% c("Saturday","Sunday")) {
+        datactivityNA[i,]$day<-"weekend"
+    }
+    else{
+        datactivityNA[i,]$day<-"weekday"
+    }
+}
+DayToDay <- aggregate(datactivityNA$steps ~ datactivityNA$interval + datactivityNA$day, datactivityNA, mean)
+```
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+```{r, echo=TRUE}
+names(DayToDay) <- c("interval", "day", "steps")
+library(lattice)
+xyplot(steps ~ interval | day, DayToDay, type = "l", layout = c(1, 2), 
+    xlab = "Interval", ylab = "Number of steps")
+```
+
+
+
 
